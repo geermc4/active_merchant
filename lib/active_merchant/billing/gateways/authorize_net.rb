@@ -66,7 +66,7 @@ module ActiveMerchant #:nodoc:
             add_payment_source(xml, payment)
             add_invoice(xml, options)
             add_customer_data(xml, payment, options)
-            add_retail_data(xml, payment)
+            add_market_type(xml, payment)
             add_settings(xml, payment, options)
             add_user_fields(xml, amount, options)
           end
@@ -83,6 +83,7 @@ module ActiveMerchant #:nodoc:
             add_payment_source(xml, payment)
             add_invoice(xml, options)
             add_customer_data(xml, payment, options)
+            add_market_type(xml, payment)
             add_settings(xml, payment, options)
             add_user_fields(xml, amount, options)
           end
@@ -268,11 +269,18 @@ module ActiveMerchant #:nodoc:
         end
       end
 
-      def add_retail_data(xml, payment)
-        return unless valid_track_data
-        xml.retail do
-          # As per http://www.authorize.net/support/CP_guide.pdf, '2' is for Retail, the only current market_type
-          xml.marketType(2)
+      def add_market_type(xml, payment)
+        return if card_brand(payment) == 'check' or card_brand(payment) == 'apple_pay'
+        if valid_track_data
+          xml.retail do
+            # marketType 2 = retail transaction
+            xml.marketType(2)
+          end
+        elsif payment.manual_entry
+          xml.retail do
+            # marketType 1 = moto transaction
+            xml.marketType(1)
+          end
         end
       end
 
